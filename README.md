@@ -26,6 +26,25 @@ This project is designed to help you send a daily engineering summary without ma
 - HTML report generation using Jinja2 templates
 - Email delivery through Gmail API
 
+## Project structure
+
+```text
+.
+├── app.py                  # Entry point for the daily report flow
+├── config.yaml             # Repository and email configuration
+├── credentials/            # Gmail OAuth credentials and token files
+├── data/                  # Generated report output
+├── src/
+│   ├── gmail_client.py     # Gmail API email sender
+│   ├── ollama_client.py    # Ollama-based report summarization
+│   ├── report_builder.py   # HTML report generation
+│   └── ...
+├── templates/
+│   └── daily_report.html.j2
+├── .gitignore
+└── README.md
+```
+
 ## Requirements
 
 Install the Python dependencies used by the project:
