@@ -18,7 +18,6 @@ IMPORTANT:
 - Keep the report factual.
 - Group related changes together.
 - Focus on what was actually accomplished.
-- Ensure the spelling of the name is correct.
 
 Return ONLY valid JSON.
 
