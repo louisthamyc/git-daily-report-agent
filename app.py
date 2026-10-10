@@ -52,7 +52,7 @@ def get_today_commits(repository):
         repository,
         "log",
         f"--author={curr_author}",
-        '--since="10 day ago"', # "--since=midnight"
+        "--since=midnight",
         "--pretty=format:%H|%h|%an|%ad|%s",
         "--date=iso",
     )
@@ -170,3 +170,4 @@ if __name__ == "__main__":
     )
 
     print("Daily Git report sent successfully")
+    output_file.unlink()  # Delete the temporary HTML file
