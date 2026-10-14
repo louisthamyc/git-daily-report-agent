@@ -1,20 +1,23 @@
 import base64
 import os.path
+import sys
 from email.mime.text import MIMEText
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from pathlib import Path
 
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send"
 ]
 
-PROJECT_DIR = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
-)
+if getattr(sys, "frozen", False):
+    PROJECT_DIR = Path(sys.executable).resolve().parent
+else:
+    PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 CREDENTIALS_FILE = os.path.join(
     PROJECT_DIR,

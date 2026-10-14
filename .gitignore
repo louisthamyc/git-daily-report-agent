@@ -7,3 +7,5 @@ token.json
 data/
 logs/
 config.yaml
+dist/
+build/

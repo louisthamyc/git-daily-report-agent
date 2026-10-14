@@ -4,8 +4,14 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+import sys
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent
+
+if getattr(sys, "frozen", False):
+    PROJECT_DIR = Path(sys.executable).resolve().parent
+else:
+    PROJECT_DIR = Path(__file__).resolve().parent.parent
+
 TEMPLATE_DIR = PROJECT_DIR / "templates"
 OUTPUT_DIR = PROJECT_DIR / "data" / "reports"
 
