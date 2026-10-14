@@ -1,137 +1,171 @@
 # Git Daily Report Agent
 
-A small Python automation project that inspects the Git activity for the current author, summarizes recent commits with a local Ollama model, generates a polished HTML report, and emails it to a configured recipient.
+Git Daily Report Agent is a small Python desktop automation project that inspects the current repository, summarizes the author's Git activity for the day, and sends a polished HTML report by email.
 
-## Overview
+It is designed for a local daily workflow:
 
-This project is designed to help you send a daily engineering summary without manually writing a report. It:
-
-- reads the repository configured in `config.yaml`
-- finds the current Git author and recent commit history
-- extracts commit stats and diffs for recent work
-- asks a local Ollama model to turn the raw Git activity into a structured report
-- renders the result as an HTML file in the `data/reports` folder
-- sends the report via Gmail
+- read the configured Git repository
+- collect today's commits for the current Git author
+- inspect commit stats and diffs
+- ask a local Ollama model to turn raw activity into a structured engineering summary
+- generate an HTML report
+- email the report using Gmail
+- optionally run automatically on a daily schedule from a Windows tray app
 
 ## Features
 
-- Git activity extraction from recent commits
-- AI-generated summaries using Ollama
-- Structured report output with sections for:
+- GUI configuration window for repository, recipient, and schedule
+- Windows tray icon with quick actions
+- optional daily scheduler using APScheduler
+- commit analysis for the current Git author only
+- AI-based summary generation with Ollama
+- structured report sections:
   - summary
   - accomplishments
   - bugs fixed
   - technical changes
   - next steps
-- HTML report generation using Jinja2 templates
-- Email delivery through Gmail API
+- HTML report rendering via Jinja2
+- Gmail API email delivery
 
 ## Project structure
 
 ```text
 .
-├── app.py                  # Entry point for the daily report flow
-├── config.yaml             # Repository and email configuration
-├── credentials/            # Gmail OAuth credentials and token files
-├── data/                  # Generated report output
+├── app.py                     # Tkinter UI and tray application entry point
+├── config.yaml                # Runtime configuration for repo, email, and schedule
+├── credentials/               # Gmail OAuth client secrets
+├── data/
+│   └── reports/               # temporary report output during generation
 ├── src/
-│   ├── gmail_client.py     # Gmail API email sender
-│   ├── ollama_client.py    # Ollama-based report summarization
-│   ├── report_builder.py   # HTML report generation
+│   ├── gmail_client.py         # Gmail send logic and OAuth setup
+│   ├── ollama_client.py        # Local Ollama prompt + response handling
+│   ├── report_builder.py       # Jinja2 HTML report rendering
+│   ├── report_sender.py        # orchestration for collecting Git data and sending mail
 │   └── ...
 ├── templates/
-│   └── daily_report.html.j2
+│   └── daily_report.html.j2   # HTML template for the final report
 ├── .gitignore
-└── README.md
+├── GitDailyAgent.spec         # PyInstaller build specification
+├── README.md
 ```
 
 ## Requirements
 
-Install the Python dependencies used by the project:
+Install the required Python dependencies:
 
 ```bash
-pip install pyyaml jinja2 google-auth google-auth-oauthlib google-api-python-client ollama
+pip install pyyaml jinja2 google-auth google-auth-oauthlib google-api-python-client ollama pillow pystray apscheduler
 ```
 
 You also need:
 
 - Git installed and available in PATH
-- A running local Ollama instance with a model available, such as `qwen2.5:7b`
-- Create a Google Cloud Project and get Google Gmail API credentials configured in the `credentials/` folder
+- a running local Ollama server
+- an Ollama model available, for example `qwen2.5:7b`
+- a Google Cloud project with Gmail API enabled
+- OAuth credentials saved at `credentials/credentials.json`
 
 ## Configuration
 
-Update `config.yaml` before running the project:
+The app creates `config.yaml` automatically if it does not exist. A typical configuration looks like this:
 
 ```yaml
-repository: "C:\\YOUR REPO"
-
+repository: "C:/path/to/your/repository"
 email:
   recipient: "you@example.com"
-
 report:
   subject_prefix: "Git Daily Report"
+schedule:
+  time: "19:00"
 ```
 
-Notes:
+### Settings explained
 
-- `repository` should point to the Git repository you want to inspect
-- `email.recipient` is the address that receives the generated report
-- `report.subject_prefix` controls the email subject prefix
+- `repository`: the Git repository to inspect
+- `email.recipient`: the email address for the report
+- `report.subject_prefix`: prefix used in the email subject
+- `schedule.time`: daily run time in `HH:MM` format using the local configured timezone (`Asia/Kuala_Lumpur` in the app)
 
 ## Gmail setup
 
-The Gmail client expects OAuth credentials in:
+The Gmail client expects these files:
 
 - `credentials/credentials.json`
 - `credentials/token.json`
 
-The first time the app runs, it may open a browser-based Google sign-in flow and generate a token file.
+When the app runs for the first time, it can open a browser-based Google OAuth sign-in flow and create the token automatically.
 
-## Running the project
+## Running the app
 
-From the project root:
+From the project root, run:
 
 ```bash
 python app.py
 ```
 
-When executed, the script will:
+This opens the Git Daily Agent window. From there you can:
 
-1. find recent commits for the current Git author
-2. fetch commit stats and diffs
-3. send the full activity to the Ollama model
-4. generate an HTML report
-5. email the report to the configured recipient
+- choose the repository path with Browse...
+- update the email recipient
+- set the daily schedule time
+- save the configuration
+- trigger a report manually
+- minimize the app to the system tray
 
-## How it works
+## Daily report flow
 
-The main workflow is defined in `app.py`:
+The application workflow is:
 
-- `get_today_commits()` reads recent Git commits for the active author
-- `get_commit_details()` fetches each commit's diff and stats
-- `build_git_activity()` assembles the commit payload
-- `analyze_git_activity()` asks Ollama to return valid JSON structured as a daily report
-- `build_html_report()` renders the final HTML document
-- `send_email()` sends the output using Gmail
+1. load config values from `config.yaml`
+2. collect commits authored by the current Git user for the current day
+3. fetch stats and diff details for each commit
+4. send the raw activity to Ollama for structured analysis
+5. render the HTML summary using the Jinja2 template
+6. send the email through Gmail
+
+The main logic lives in:
+
+- `app.py` — desktop app, scheduling, and tray integration
+- `src/report_sender.py` — git activity collection and orchestration
+- `src/ollama_client.py` — Ollama request and JSON parsing
+- `src/report_builder.py` — HTML output generation
+- `src/gmail_client.py` — Gmail authentication and email sending
 
 ## Output
 
-Generated reports are saved in:
+The report is generated temporarily in:
 
 ```text
 data/reports/
 ```
 
-The output file name follows the pattern:
+The file name follows this pattern:
 
 ```text
 report-YYYY-MM-DD.html
 ```
 
+The current implementation writes the HTML report to disk and removes it after the email is sent, so the app can generate and deliver the report without leaving an unnecessary local copy behind.
+
 ## Notes
 
-- The project still WIP
-- The project currently checks commit history using the current Git author and a rolling 10-day window (You may change according to need).
-- The project is designed around local automation and may need minor adjustments depending on your repository path, Gmail setup, and available Ollama model.
-- The generated report is intentionally factual and constrained to the actual Git activity that was analyzed.
+- The project reads the current Git author using `git config user.name`.
+- It only analyzes commits from the current day (`--since=midnight`).
+- The app is intended for local automation and may require small configuration adjustments depending on your repository path, timezone, Gmail OAuth setup, and the Ollama model you use.
+- The generated summary is intentionally constrained to the actual Git activity analyzed by the app.
+
+## Typical workflow
+
+```bash
+# start Ollama
+ollama serve
+
+# ensure the model is available
+ollama pull qwen2.5:7b
+
+# run the app
+python app.py
+```
+
+Once the app is running, you can save your configuration and let the scheduler send a daily report automatically.
